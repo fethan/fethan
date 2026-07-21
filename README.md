@@ -19,6 +19,6 @@ Building and running a production SaaS platform for the automotive chiptuning in
 Most of my current work lives in private client repositories.
 
 #### Reach me
-
+- 🌐 [fethan.us](https://fethan.us)
 - 📫 `fethan.us [at] gmail [dot] com`
 - 💼 Available for freelance work — binary parsing, APIs, and full-stack TypeScript
