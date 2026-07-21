@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fethan — Binary File Processing &amp; Full-Stack TypeScript</title>
+<meta name="description" content="Full-stack TypeScript developer specializing in binary file parsing, automotive ECU firmware, and production APIs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --base:#0B0E14;
+    --panel:#12161F;
+    --panel-2:#161B26;
+    --line:#232A38;
+    --amber:#E8B23A;
+    --cyan:#3FD3C6;
+    --text:#E6E9EF;
+    --muted:#7B8698;
+    --muted-2:#525C6E;
+    --display:'Space Grotesk',system-ui,sans-serif;
+    --body:'Inter',system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--base);color:var(--text);font-family:var(--body);
+    line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(900px 500px at 78% -10%, rgba(232,178,58,.07), transparent 60%),
+      radial-gradient(700px 500px at 8% 12%, rgba(63,211,198,.05), transparent 55%);
+  }
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px;position:relative;z-index:1;}
+  a{color:inherit;text-decoration:none;}
+
+  /* nav */
+  nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);
+    background:rgba(11,14,20,.72);border-bottom:1px solid var(--line);}
+  .nav-in{display:flex;align-items:center;justify-content:space-between;
+    height:64px;max-width:1120px;margin:0 auto;padding:0 28px;}
+  .brand{font-family:var(--mono);font-weight:700;letter-spacing:.5px;font-size:15px;}
+  .brand .dot{color:var(--amber);}
+  .nav-links{display:flex;gap:26px;font-family:var(--mono);font-size:13px;color:var(--muted);}
+  .nav-links a{transition:color .2s;}
+  .nav-links a:hover{color:var(--text);}
+
+  /* eyebrow / offset markers */
+  .eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:1px;
+    color:var(--amber);margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+  .eyebrow::after{content:"";height:1px;flex:1;max-width:120px;
+    background:linear-gradient(90deg,var(--line),transparent);}
+
+  /* hero */
+  header{padding:96px 0 88px;}
+  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;}
+  h1{font-family:var(--display);font-weight:700;font-size:clamp(44px,6.4vw,76px);
+    line-height:1.02;letter-spacing:-1.5px;}
+  h1 .accent{color:var(--amber);}
+  .lede{margin-top:26px;font-size:18px;color:var(--muted);max-width:34ch;}
+  .lede b{color:var(--text);font-weight:600;}
+  .cta-row{margin-top:38px;display:flex;gap:14px;flex-wrap:wrap;}
+  .btn{font-family:var(--mono);font-size:13.5px;font-weight:500;padding:13px 22px;
+    border-radius:9px;border:1px solid var(--line);transition:all .2s;display:inline-flex;gap:9px;align-items:center;}
+  .btn-primary{background:var(--amber);color:#1a1206;border-color:var(--amber);font-weight:700;}
+  .btn-primary:hover{filter:brightness(1.08);transform:translateY(-1px);}
+  .btn-ghost:hover{border-color:var(--muted);color:var(--text);}
+
+  /* signature: hex decoder */
+  .decoder{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    overflow:hidden;box-shadow:0 24px 60px -30px rgba(0,0,0,.8);}
+  .dec-bar{display:flex;align-items:center;gap:8px;padding:12px 16px;
+    border-bottom:1px solid var(--line);background:var(--panel-2);}
+  .dec-bar .dt{width:10px;height:10px;border-radius:50%;background:var(--muted-2);}
+  .dec-bar .lbl{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:6px;}
+  .dec-body{display:grid;grid-template-columns:1fr 1fr;font-family:var(--mono);font-size:13px;}
+  .hex{padding:20px 18px;border-right:1px solid var(--line);color:var(--muted);}
+  .hex .row{white-space:nowrap;line-height:2;}
+  .hex .off{color:var(--muted-2);}
+  .b{transition:color .25s, background .25s;padding:1px 0;border-radius:3px;}
+  .b.lit{color:var(--amber);background:rgba(232,178,58,.14);}
+  .json{padding:20px 18px;color:var(--muted);line-height:2;}
+  .json .k{color:#8FB6FF;}
+  .json .s{color:var(--cyan);}
+  .json .n{color:var(--amber);}
+  .json .ok{color:var(--cyan);}
+  .json .ln{opacity:0;transform:translateY(4px);transition:opacity .4s,transform .4s;}
+  .json .ln.show{opacity:1;transform:none;}
+
+  /* sections */
+  section{padding:78px 0;border-top:1px solid var(--line);}
+  .sec-title{font-family:var(--display);font-weight:600;font-size:clamp(26px,3.4vw,36px);
+    letter-spacing:-.6px;margin-bottom:14px;}
+  .sec-intro{color:var(--muted);max-width:56ch;margin-bottom:44px;font-size:16.5px;}
+
+  /* capabilities grid */
+  .caps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  .cap{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:24px 22px;
+    transition:border-color .25s,transform .25s;}
+  .cap:hover{border-color:rgba(232,178,58,.4);transform:translateY(-3px);}
+  .cap .ic{font-family:var(--mono);font-size:12px;color:var(--amber);margin-bottom:14px;}
+  .cap h3{font-family:var(--display);font-weight:600;font-size:18px;margin-bottom:8px;}
+  .cap p{color:var(--muted);font-size:14.5px;}
+
+  /* pipeline */
+  .pipe{display:grid;grid-template-columns:repeat(5,1fr);gap:0;}
+  .stage{position:relative;padding:22px 18px 22px 0;}
+  .stage .no{font-family:var(--mono);font-size:12px;color:var(--muted-2);margin-bottom:12px;}
+  .stage h4{font-family:var(--display);font-weight:600;font-size:15.5px;margin-bottom:7px;}
+  .stage p{color:var(--muted);font-size:13.5px;line-height:1.5;}
+  .stage:not(:last-child)::after{content:"→";position:absolute;right:14px;top:20px;
+    color:var(--amber);font-family:var(--mono);opacity:.55;}
+
+  /* proof */
+  .proof-grid{display:grid;grid-template-columns:auto 1fr;gap:56px;align-items:center;}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:30px 44px;}
+  .stat b{font-family:var(--display);font-weight:700;font-size:40px;letter-spacing:-1px;display:block;color:var(--text);}
+  .stat b .u{color:var(--amber);}
+  .stat span{font-family:var(--mono);font-size:12.5px;color:var(--muted);}
+  .shot{border:1px solid var(--line);border-radius:13px;overflow:hidden;box-shadow:0 24px 60px -34px rgba(0,0,0,.85);}
+  .shot img{display:block;width:100%;height:auto;}
+  .shot .cap-txt{font-family:var(--mono);font-size:12px;color:var(--muted);padding:11px 15px;
+    border-top:1px solid var(--line);background:var(--panel-2);}
+
+  /* contact */
+  .contact-card{background:linear-gradient(160deg,var(--panel),var(--base));
+    border:1px solid var(--line);border-radius:18px;padding:52px 44px;text-align:center;}
+  .contact-card h2{font-family:var(--display);font-weight:700;font-size:clamp(28px,4vw,42px);
+    letter-spacing:-1px;margin-bottom:16px;}
+  .contact-card h2 .accent{color:var(--amber);}
+  .contact-card p{color:var(--muted);max-width:48ch;margin:0 auto 30px;}
+  .mail{font-family:var(--mono);font-size:15px;color:var(--cyan);}
+
+  footer{padding:40px 0 60px;border-top:1px solid var(--line);
+    font-family:var(--mono);font-size:12px;color:var(--muted-2);
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+
+  /* reveal */
+  .rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease;}
+  .rv.in{opacity:1;transform:none;}
+
+  @media(max-width:860px){
+    .hero-grid{grid-template-columns:1fr;gap:40px;}
+    .caps{grid-template-columns:1fr;}
+    .pipe{grid-template-columns:1fr 1fr;}
+    .stage:not(:last-child)::after{display:none;}
+    .proof-grid{grid-template-columns:1fr;gap:36px;}
+    .nav-links{display:none;}
+    .dec-body{grid-template-columns:1fr;}
+    .hex{border-right:none;border-bottom:1px solid var(--line);overflow-x:auto;}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *{scroll-behavior:auto;}
+    .rv,.json .ln{opacity:1!important;transform:none!important;transition:none;}
+    .b{transition:none;}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-in">
+    <div class="brand">fethan<span class="dot">.</span></div>
+    <div class="nav-links">
+      <a href="#caps">capabilities</a>
+      <a href="#pipeline">pipeline</a>
+      <a href="#proof">proof</a>
+      <a href="#contact">contact</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header>
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">0x00 // BINARY</div>
+        <h1>I read meaning<br>out of <span class="accent">raw bytes.</span></h1>
+        <p class="lede">Full-stack TypeScript developer working in a niche most developers avoid: <b>automotive ECU firmware</b> and <b>proprietary binary formats</b> — plus the production APIs and apps around them.</p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="#contact">Start a project →</a>
+          <a class="btn btn-ghost" href="#proof">See the work</a>
+        </div>
+      </div>
+
+      <div class="decoder" aria-hidden="true">
+        <div class="dec-bar">
+          <span class="dt"></span><span class="dt"></span><span class="dt"></span>
+          <span class="lbl">ecu-firmware.bin — parse</span>
+        </div>
+        <div class="dec-body">
+          <div class="hex" id="hex">
+            <div class="row"><span class="off">00000000</span>&nbsp;&nbsp;<span class="b" data-g="0">4D 5A 46 31</span> <span class="b" data-g="1">02 00</span> <span class="b" data-g="2">1A 00</span></div>
+            <div class="row"><span class="off">00000008</span>&nbsp;&nbsp;<span class="b" data-g="3">D4 07 03 0F</span> 00 42 4F 53</div>
+            <div class="row"><span class="off">00000010</span>&nbsp;&nbsp;<span class="b" data-g="3">43 48 5F 45 44 43 31 37</span></div>
+            <div class="row"><span class="off">00000018</span>&nbsp;&nbsp;00 00 <span class="b" data-g="4">3E 91</span> 00 00 <span class="b" data-g="4">01 C8</span></div>
+            <div class="row"><span class="off">00000020</span>&nbsp;&nbsp;25 00 00 00 80 FA 00 00</div>
+            <div class="row"><span class="off">00000028</span>&nbsp;&nbsp;1F 40 00 00 00 00 00 00</div>
+            <div class="row"><span class="off">00000030</span>&nbsp;&nbsp;<span class="b" data-g="5">7B 3C 9E A2</span> 00 00 00 00</div>
+          </div>
+          <div class="json" id="json">
+            <div class="ln" data-g="0">{</div>
+            <div class="ln" data-g="0">&nbsp;&nbsp;<span class="k">"magic"</span>: <span class="s">"MZF1"</span>,</div>
+            <div class="ln" data-g="1">&nbsp;&nbsp;<span class="k">"version"</span>: <span class="n">2</span>,</div>
+            <div class="ln" data-g="2">&nbsp;&nbsp;<span class="k">"records"</span>: <span class="n">26</span>,</div>
+            <div class="ln" data-g="3">&nbsp;&nbsp;<span class="k">"device"</span>: <span class="s">"BOSCH_EDC17"</span>,</div>
+            <div class="ln" data-g="4">&nbsp;&nbsp;<span class="k">"payload"</span>: { <span class="k">"off"</span>: <span class="n">0x3E91</span>, <span class="k">"len"</span>: <span class="n">456</span> },</div>
+            <div class="ln" data-g="5">&nbsp;&nbsp;<span class="k">"checksum"</span>: <span class="s">"0x7B3C9EA2"</span> <span class="ok">✓</span></div>
+            <div class="ln" data-g="5">}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+</div>
+
+<section id="caps">
+  <div class="wrap">
+    <div class="eyebrow rv">0x20 // CAPABILITIES</div>
+    <h2 class="sec-title rv">What I build</h2>
+    <p class="sec-intro rv">Deep specialization in binary work, wrapped in the full stack needed to ship it as a real product — not a prototype.</p>
+    <div class="caps">
+      <div class="cap rv"><div class="ic">[ 0x01 ]</div><h3>Binary parsing</h3><p>Hex-level structure mapping, checksum handling, and reverse engineering of proprietary or undocumented file formats.</p></div>
+      <div class="cap rv"><div class="ic">[ 0x02 ]</div><h3>Backends &amp; APIs</h3><p>Node.js / TypeScript on Fastify, Knex &amp; Prisma, MySQL / PostgreSQL, Redis — validated inputs, rate limiting, tested.</p></div>
+      <div class="cap rv"><div class="ic">[ 0x03 ]</div><h3>Frontends</h3><p>Next.js and React, internationalized (9 languages in production), Tailwind — polished, responsive interfaces.</p></div>
+      <div class="cap rv"><div class="ic">[ 0x04 ]</div><h3>Desktop</h3><p>Electron applications that talk to real hardware, including USB dongle integration and native bridges.</p></div>
+      <div class="cap rv"><div class="ic">[ 0x05 ]</div><h3>API security</h3><p>HMAC request signing, replay protection, per-user quota systems, and standardized error handling on every route.</p></div>
+      <div class="cap rv"><div class="ic">[ 0x06 ]</div><h3>Reverse engineering</h3><p>Given only sample files, I map the layout — offsets, records, encodings, checksums — and turn it into typed code.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="pipeline">
+  <div class="wrap">
+    <div class="eyebrow rv">0x40 // THE PIPELINE</div>
+    <h2 class="sec-title rv">From uploaded binary to flash-ready file</h2>
+    <p class="sec-intro rv">The production SaaS I designed and run for the automotive chiptuning industry — every stage built, secured, and shipped by me.</p>
+    <div class="pipe">
+      <div class="stage rv"><div class="no">01</div><h4>Upload</h4><p>2–8 MB ECU firmware in via web UI or HMAC-signed B2B API.</p></div>
+      <div class="stage rv"><div class="no">02</div><h4>Fingerprint</h4><p>Signature scan identifies ECU family and software version.</p></div>
+      <div class="stage rv"><div class="no">03</div><h4>Detect</h4><p>Hex-level location of diagnostic trouble code tables.</p></div>
+      <div class="stage rv"><div class="no">04</div><h4>Patch</h4><p>Changes applied in place; checksums recalculated.</p></div>
+      <div class="stage rv"><div class="no">05</div><h4>Deliver</h4><p>Flash-ready file returned, with per-user audit trail.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="proof">
+  <div class="wrap">
+    <div class="eyebrow rv">0x60 // PROOF</div>
+    <h2 class="sec-title rv">Running in production</h2>
+    <div class="proof-grid">
+      <div class="stats rv">
+        <div class="stat"><b>95<span class="u">+</span></b><span>ECU types supported</span></div>
+        <div class="stat"><b>&lt;5<span class="u">s</span></b><span>typical turnaround</span></div>
+        <div class="stat"><b>2–8<span class="u">MB</span></b><span>binaries parsed</span></div>
+        <div class="stat"><b>9</b><span>UI languages shipped</span></div>
+      </div>
+      <div class="shot rv">
+        <img src="./dtc-table.png" alt="DTC management interface parsed from ECU firmware, showing SPN/FMI-decoded fault codes">
+        <div class="cap-txt">// fault codes parsed directly from the firmware binary</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="wrap">
+    <div class="contact-card rv">
+      <div class="eyebrow" style="justify-content:center">0x80 // CONTACT</div>
+      <h2>Got a format that needs to<br>work <span class="accent">exactly right?</span></h2>
+      <p>Binary parsers, APIs, or a full-stack build. Send me a few sample files and what you need out of them — I'll confirm feasibility before you commit.</p>
+      <div class="mail">fethan.us [at] gmail [dot] com</div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+  <footer>
+    <span>© 2026 Fethan — full-stack TypeScript &amp; binary systems</span>
+    <span>built byte by byte</span>
+  </footer>
+</div>
+
+<script>
+  // signature: sweep hex groups, resolve JSON lines
+  (function(){
+    if(matchMedia('(prefers-reduced-motion:reduce)').matches){
+      document.querySelectorAll('.json .ln').forEach(function(l){l.classList.add('show');});
+      return;
+    }
+    var groups=6, i=0;
+    function step(){
+      document.querySelectorAll('.b[data-g="'+i+'"]').forEach(function(b){b.classList.add('lit');});
+      document.querySelectorAll('.json .ln[data-g="'+i+'"]').forEach(function(l){l.classList.add('show');});
+      i++;
+      if(i<groups) setTimeout(step, 480);
+      else setTimeout(function(){
+        document.querySelectorAll('.b.lit').forEach(function(b){b.classList.remove('lit');});
+        setTimeout(function(){ i=0; step(); }, 2600);
+      }, 900);
+    }
+    setTimeout(step, 700);
+  })();
+
+  // scroll reveal
+  (function(){
+    var items=document.querySelectorAll('.rv');
+    if(!('IntersectionObserver' in window)){
+      items.forEach(function(el){el.classList.add('in');}); return;
+    }
+    var io=new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+    },{threshold:.14});
+    items.forEach(function(el,idx){
+      el.style.transitionDelay=(Math.min(idx%6,5)*55)+'ms';
+      io.observe(el);
+    });
+    // safety: never leave content hidden
+    setTimeout(function(){ items.forEach(function(el){el.classList.add('in');}); }, 2500);
+  })();
+</script>
+</body>
+</html>
